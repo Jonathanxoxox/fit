@@ -75,6 +75,7 @@ h2.evil { color: var(--hell); }
 h2.good { color: var(--heaven); }
 .lede { margin: 0; font-size: clamp(18px, 2.6vw, 23px); font-weight: 600; max-width: 34ch; text-shadow: 0 2px 0 var(--ink); }
 .rank { margin: 0; font-family: var(--display); font-size: clamp(15px, 2.4vw, 20px); color: var(--tiger); letter-spacing: .04em; }
+.truth { margin: 0; font-style: italic; color: var(--muted); max-width: 40ch; text-shadow: 0 1px 0 var(--ink); }
 .rules { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; max-width: 46ch; }
 .rules li { padding-left: 22px; position: relative; color: var(--muted); text-shadow: 0 1px 0 var(--ink); }
 .rules li::before {
@@ -117,7 +118,7 @@ h2.good { color: var(--heaven); }
   <section class="screen" id="start">
     <div class="inner">
       <h1>Jenseits-<br>Tiger</h1>
-      <p class="lede">Engel wollen dich bekehren. Teufel wollen dich verführen. Du willst nur fressen.</p>
+      <p class="lede">Engel wollen dich bekehren. Teufel wollen dich verführen. Du willst nur fressen. Eine Reise durch fünf Welten hinter den Sternen.</p>
       <ul class="rules">
         <li><b>Laufen:</b> Maus, Finger oder WASD. <b>Springen:</b> Klick, Tipp oder Leertaste.</li>
         <li><b>Nur im Sprung frisst du.</b> Engel fressen ist böse. Teufel fressen ist gut.</li>
@@ -126,6 +127,7 @@ h2.good { color: var(--heaven); }
         <li><b>Im Sprung bist du unantastbar.</b> Fünf Kapitel, jedes endet mit einem Endgegner.</li>
       </ul>
       <button class="go" id="play" type="button">Tu es, Tiger</button>
+      <p class="truth" id="truthCount"></p>
     </div>
   </section>
 
@@ -134,6 +136,7 @@ h2.good { color: var(--heaven); }
       <h2 id="verdict">Heiliggesprochen</h2>
       <p class="lede" id="verdictText"></p>
       <p class="rank" id="rank"></p>
+      <p class="truth" id="overTruth"></p>
       <dl class="stats">
         <div><dt>Punkte</dt><dd id="sScore">0</dd></div>
         <div><dt>Rekord</dt><dd id="sBest">0</dd></div>
@@ -165,15 +168,15 @@ const C = { ink: '#140a1c', tiger: '#ff8c1a', gold: '#ffd23f', heaven: '#9fe3ff'
 const ALL = { human: 1, swarm: 1, dual: 1, hammer: 1, zealot: 1 };
 const ROMAN = ['I', 'II', 'III', 'IV', 'V'];
 const CHAPS = [
-  { name: 'Morgenröte', sub: 'Zu gut? Friss einen Engel. Zu böse? Friss einen Teufel.', vo: 'kap1', key: 0,
-    base: [0.21, 0.06, 0.32], dark: [0.06, 0.015, 0.11], vein: [1, 0.5, 0.08], freq: 7.5, warp: 1, rad: 0, boss: ['angel'], feats: {} },
-  { name: 'Menschliches, Allzumenschliches', sub: 'Neu: Menschen. Schwer verdaulich, bitte umspringen.', vo: 'kap2', key: -2,
+  { name: 'Morgenröte', place: 'Über den Wolken', planet: [0.3, -0.22, 0.08], ring: 0, cloud: 1, sub: 'Zu gut? Friss einen Engel. Zu böse? Friss einen Teufel.', vo: 'kap1', key: 0,
+    base: [0.34, 0.13, 0.36], dark: [0.05, 0.02, 0.14], vein: [1, 0.6, 0.28], freq: 7.5, warp: 1, rad: 0, boss: ['angel'], feats: {} },
+  { name: 'Menschliches, Allzumenschliches', place: 'Der Papiermond', planet: [-0.3, -0.2, 0.13], ring: 1, cloud: 0.75, sub: 'Neu: Menschen. Schwer verdaulich, bitte umspringen.', vo: 'kap2', key: -2,
     base: [0.04, 0.24, 0.27], dark: [0.01, 0.07, 0.10], vein: [0.5, 1, 0.62], freq: 6, warp: 0.8, rad: 0, boss: ['devil'], feats: { human: 1, swarm: 1 } },
-  { name: 'Die fröhliche Wissenschaft', sub: 'Neu: Doppelmoral und der Hammer.', vo: 'kap3', key: 3,
+  { name: 'Die fröhliche Wissenschaft', place: 'Nebel des Gelächters', planet: [0.28, -0.12, 0.17], ring: 0, cloud: 0.9, sub: 'Neu: Doppelmoral und der Hammer.', vo: 'kap3', key: 3,
     base: [0.40, 0.05, 0.33], dark: [0.13, 0.01, 0.15], vein: [1, 0.85, 0.2], freq: 9, warp: 1.5, rad: 0, boss: ['angel', 'devil'], feats: { human: 1, swarm: 1, dual: 1, hammer: 1 } },
-  { name: 'Götzen-Dämmerung', sub: 'Neu: Eiferer. Sie meinen es ernst.', vo: 'kap4', key: -4,
+  { name: 'Götzen-Dämmerung', place: 'Die Ringe des Götzen', planet: [0, -0.14, 0.26], ring: 1, cloud: 0.5, sub: 'Neu: Eiferer. Sie meinen es ernst.', vo: 'kap4', key: -4,
     base: [0.30, 0.16, 0.06], dark: [0.07, 0.03, 0.02], vein: [0.45, 0.8, 1], freq: 5, warp: 0.6, rad: 1, boss: ['idol'], feats: ALL },
-  { name: 'Also sprach der Tiger', sub: 'Alles auf einmal.', vo: 'kap5', key: 5,
+  { name: 'Also sprach der Tiger', place: 'Am Rand von allem', planet: [0, -0.1, 0.15], ring: 1, cloud: 0.3, sub: 'Alles auf einmal.', vo: 'kap5', key: 5,
     base: [0.17, 0.17, 0.20], dark: [0.02, 0.02, 0.03], vein: [1, 0.5, 0.08], freq: 11, warp: 1.2, rad: 0, boss: ['idol', 'angel', 'devil'], feats: ALL }
 ];
 
@@ -195,8 +198,8 @@ float noise(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.-2.*f);
 float fbm(vec2 p){ float a=.5, s=0.; for(int i=0;i<4;i++){ s+=a*noise(p); p=p*2.03+vec2(17.3,9.1); a*=.5; } return s; }`;
 // The void: a slowly flowing tiger pelt. It turns to sky and god rays when gut, to embers and fire when böse.
 const FS_BG = HEAD + NOISE + `
-uniform vec2 uSize, uTiger; uniform float uTime, uFlow, uMoral, uBeat, uEnergy, uUber, uFreq, uWarp, uRad;
-uniform vec3 uBaseN, uDarkN, uVeinN;
+uniform vec2 uSize, uTiger; uniform float uTime, uFlow, uMoral, uBeat, uEnergy, uUber, uFreq, uWarp, uRad, uKal, uRing, uCloud;
+uniform vec3 uBaseN, uDarkN, uVeinN, uPlanet;
 float motes(vec2 uv, float sc, float t){
   vec2 g = uv*sc; g.y += t; vec2 id = floor(g), f = fract(g)-.5; float h = hash(id);
   vec2 o = (vec2(hash(id+3.1),hash(id+7.7))-.5)*.6;
@@ -205,6 +208,11 @@ float motes(vec2 uv, float sc, float t){
 void main(){
   float asp = uSize.x/uSize.y;
   vec2 p = (vUv-.5)*vec2(asp,1.);
+  // delirium: the sky folds into a slowly turning mandala
+  float ka = atan(p.y,p.x), seg = 6.2832/8.;
+  ka = abs(mod(ka+uTime*.15, seg)-seg*.5);
+  p = mix(p, length(p)*vec2(cos(ka),sin(ka))*1.3-vec2(.3,.1), uKal);
+  float gy = clamp(p.y+.5,0.,1.);
   float good = clamp(uMoral,0.,1.), evil = clamp(-uMoral,0.,1.);
   vec2 q = p*1.45;
   vec2 w1 = vec2(fbm(q*1.2+vec2(0.,uFlow*.6)), fbm(q*1.2+vec2(5.2,-uFlow*.5)));
@@ -222,13 +230,42 @@ void main(){
   vec3 vein = mix(mix(uVeinN, vec3(1.,.80,.30), good), vec3(1.,.24,.03), evil);
   vec3 rb = .5+.5*cos(6.2832*(depth*2.+uTime*.5+vec3(0.,.33,.67)));
   vein = mix(vein, rb, uUber);
-  vec3 col = mix(base*(.55+.9*depth), dark, stripe*.88);
-  col += rb*.07*(1.-abs(uMoral))*(1.-stripe);
-  col += vein*edge*(.16+.38*uBeat+.4*uEnergy)*(.4+depth)*(1.-.35*good);
+  // sky: deep space above, a glowing horizon below
+  vec3 col = mix(dark*1.25, base*1.05, smoothstep(0.,1.,gy));
+  col += vein*.14*smoothstep(.5,1.,gy);
+  float st = motes(p+7.3, 26., 0.) + .6*motes(p*1.7+2.1, 44., 0.);
+  col += vec3(1.,.95,.85)*st*(1.-gy*.85)*.9;
+  // aurora: the tiger pelt drifts across the sky
+  col = mix(col, dark, stripe*.42*(1.-gy*.5));
+  col += rb*.06*(1.-abs(uMoral))*(1.-stripe);
+  col += vein*edge*(.14+.34*uBeat+.4*uEnergy)*(.4+depth)*(1.-.35*good);
+  // a planet, painted in flat tones, with or without rings
+  vec2 pc = uPlanet.xy; float pr = uPlanet.z; vec2 pn = (p-pc)/pr; float pd = length(pn);
+  float disc = 1.-smoothstep(.985,1.015,pd);
+  float lit = clamp(dot(normalize(vec3(pn, sqrt(max(0.,1.-pd*pd)))), normalize(vec3(-.55,-.6,.58))),0.,1.);
+  lit = floor(lit*4.+.5)/4.;
+  float bnd = fbm(vec2(pn.x*1.5+uFlow*.1, pn.y*5.));
+  vec3 pcol = mix(dark*1.6+.03, mix(vein,vec3(1.,.95,.88),.35)*(.7+.3*bnd), lit)*.62;
+  col += vein*.2*exp(-max(pd-1.,0.)*5.);
+  float rr = length((p-pc)*vec2(1.,3.4)/pr);
+  float ring = smoothstep(1.35,1.45,rr)*(1.-smoothstep(1.95,2.05,rr))*uRing*(.6+.4*sin(rr*40.));
+  float front = step(pc.y, p.y);
+  col = mix(col, vein*.7+.12, ring*(1.-front)*.65);
+  col = mix(col, pcol, disc);
+  col = mix(col, vein*.7+.12, ring*front*.65);
+  // hand-painted cumulus drifting along the horizon
+  vec2 cp = vec2(p.x*1.25 + uFlow*.22, p.y*2.5) + (w1-.47)*.7;
+  float cl = fbm(cp), sh = fbm(cp+vec2(.07,.1));
+  float mask = smoothstep(.5,.6, cl + (gy-.68)*1.25*uCloud + (uCloud-1.)*.4);
+  float cli = floor(clamp((cl-sh)*9.+.55,0.,1.)*3.+.5)/3.;
+  vec3 ccol = mix(mix(base,vec3(.42,.36,.6),.5)*.8, mix(vec3(.86,.8,.82),vein,.18)*.78, cli);
+  col = mix(col, ccol, mask*.9);
+  float fc = fbm(vec2(p.x*2.2 - uFlow*.1 + 4., p.y*5.+2.));
+  col = mix(col, ccol*.8+base*.2, smoothstep(.56,.66, fc+(gy-.5)*.5)*.35*uCloud);
   float mt = uTime*(.06+.14*evil-.16*good);
   col += vein*(motes(p,8.,mt)+.6*motes(p+3.7,15.,mt*1.6))*.3;
   vec2 tp = (vUv - uTiger/uSize)*vec2(asp,1.);
-  col += (base*.55 + vein*.06)*exp(-dot(tp,tp)*5.);
+  col += (base*.5 + vein*.06)*exp(-dot(tp,tp)*5.);
   vec2 o = vec2(p.x, p.y+.8);
   float rays = fbm(vec2(atan(o.x,o.y)*7., uTime*.12+length(o)*.3));
   rays = pow(max(rays,0.),3.)*5.;
@@ -362,6 +399,7 @@ function renderGL() {
   gl.uniform1f(u.uBeat, calm ? 0 : beat); gl.uniform1f(u.uEnergy, energy); gl.uniform1f(u.uUber, uberMix);
   gl.uniform3fv(u.uBaseN, pal.base); gl.uniform3fv(u.uDarkN, pal.dark); gl.uniform3fv(u.uVeinN, pal.vein);
   gl.uniform1f(u.uFreq, pal.freq); gl.uniform1f(u.uWarp, pal.warp); gl.uniform1f(u.uRad, pal.rad);
+  gl.uniform3f(u.uPlanet, pal.planet[0] * W / H, pal.planet[1], pal.planet[2]); gl.uniform1f(u.uRing, pal.ring); gl.uniform1f(u.uCloud, pal.cloud); gl.uniform1f(u.uKal, kal);
   quad();
 
   u = P.bright.u; pass(P.bright, T.b1.fb, T.b1.w, T.b1.h); bind(0, T.game);
@@ -542,13 +580,13 @@ let score = 0, chain = 0, chainT = 0, lastType = 0, wild = false, bestChain = 0,
 let best = 0;
 try { best = +localStorage.getItem('jenseitsTigerBest') || 0; } catch (e) {}
 let chap = 0, loop = 0, chapT = 0, phase = 'wave', bossSpawned = false, chapDelay = 0, card = null;
-const pal = { base: new Float32Array(CHAPS[0].base), dark: new Float32Array(CHAPS[0].dark), vein: new Float32Array(CHAPS[0].vein), freq: 7.5, warp: 1, rad: 0 };
+const pal = { base: new Float32Array(CHAPS[0].base), dark: new Float32Array(CHAPS[0].dark), vein: new Float32Array(CHAPS[0].vein), freq: 7.5, warp: 1, rad: 0, planet: new Float32Array(CHAPS[0].planet), ring: 0, cloud: 1 };
 let creatures = [], orbs = [], parts = [], texts = [], rings = [], beams = [], ripples = [], souls = [], forms = [], picks = [], links = [];
 let spawnT = 0, formT = 9, pickT = 12, humanT = 3, swarmT = 8, dualT = 10, zealT = 6, flipT = 24;
 let uber = 0, uberMix = 0, lives = 0, invuln = 0, hammer = null, cascade = false, lastEat = null;
 let shake = 0, hitstop = 0, flash = 0, banner = null, ts = 1, slowT = 0, zoom = 1;
 let beat = 0, lastPh = 0, energy = 0.25, flow = 0, chainPulse = 0, meterBump = 0, inv = null;
-let death = 0, endGood = false, overT = 0, dangerT = 0;
+let death = 0, endGood = false, overT = 0, dangerT = 0, kal = 0, truth = null;
 const tiger = { x: 0, y: 0, vx: 0, vy: 0, a: 0, dash: 0, dvx: 0, dvy: 0, cd: 0, sc: 1, run: 0, jump: 0, trail: [] };
 const ptr = { x: 0, y: 0 };
 const keys = {};
@@ -570,6 +608,29 @@ const SAY = {
   swat: ['Weggepfotet', 'Nö.', 'Kein Interesse'],
   graze: ['Haarscharf', 'Knapp vorbei', 'Fast bekehrt']
 };
+const TRUTHS = [
+  'Wer nur Gutes frisst, wird nie satt.',
+  'Das Gleichgewicht ist kein Ort. Es ist ein Sprung.',
+  'Auch der Himmel hat Hunger.',
+  'Niemand ist so böse wie sein Ruf und so gut wie sein Nachruf.',
+  'Die Sterne urteilen nicht. Sie leuchten trotzdem.',
+  'Zwischen zwei Gewissheiten passt immer noch ein Tiger.',
+  'Was du verschlingst, verschlingt dich ein wenig zurück.',
+  'Geh weiter. Das Universum ist größer als deine letzte Entscheidung.',
+  'Ein Heiligenschein ist auch nur ein Ring, der noch nicht weiß, wohin.',
+  'Wer alles umwertet, muss am Ende trotzdem aufräumen.',
+  'Mut ist, im Sprung noch nicht zu wissen, was man fängt.',
+  'Am Rand von allem wartet niemand. Du darfst trotzdem winken.'
+];
+let truths = [];
+try { truths = (JSON.parse(localStorage.getItem('jenseitsTigerTruths') || '[]') || []).filter(i => i >= 0 && i < TRUTHS.length); } catch (e) { truths = []; }
+function revealTruth() {       // every boss guards one; found truths stay found
+  let i = TRUTHS.findIndex((x, k) => !truths.includes(k)); const isNew = i >= 0;
+  if (isNew) { truths.push(i); try { localStorage.setItem('jenseitsTigerTruths', JSON.stringify(truths)); } catch (e) {} }
+  else i = (Math.random() * TRUTHS.length) | 0;
+  truth = { t: 0, i, isNew };
+}
+function showTruthCount() { $('truthCount').textContent = 'Wahrheiten gefunden: ' + truths.length + ' von ' + TRUTHS.length; }
 const RANKS = [[0, 'Hauskatze mit Ambitionen'], [3000, 'Streuner jenseits der Moral'], [15000, 'Raubtier der Ambivalenz'], [50000, 'Gestreifter Freigeist'], [150000, 'Übertiger'], [400000, 'Also sprach der Tiger']];
 
 function meterGeom() {
@@ -738,6 +799,7 @@ function eat(c) {
   score += pts;
   burst(c.x, c.y, c.type, c.boss ? 44 : 16); if (c.kind === 'dual') burst(c.x, c.y, -c.type, 12);
   if (c.kind === 'std' || c.kind === 'zealot') debris(c);
+  if (!c.boss) for (let i = 0; i < (cascade ? 1 : 2); i++) parts.push({ k: 'w', x: c.x + rnd(-10, 10) * S, y: c.y, vx: rnd(-40, 40) * S, vy: -48 * S, life: 2.6, max: 2.6, size: rnd(5, 7) * S, rot: rnd(0, TAU), vr: 0, col: C.cream });   // little star-seedlings drift home
   sparks(c.x, c.y, tiger.a, c.boss ? 26 : 9, c.type > 0 ? C.gold : C.hell);
   ripple(c.x, c.y, c.boss ? 28 : 8 + Math.min(chain, 12));
   if (play && uber <= 0 && !wildcard && !cascade) souls.push({ x: c.x, y: c.y, type: -c.type, t: 0, side: pick([-1, 1]) });
@@ -855,14 +917,14 @@ function collect(kind) {
 function startChapter(first) {
   const c = CHAPS[chap], again = loop > 0 && chap === 0;
   chapT = 0; phase = 'wave'; bossSpawned = false; chapDelay = 0;
-  card = { t: 0, num: ROMAN[chap] + (loop > 0 ? ' · Runde ' + (loop + 1) : ''), name: c.name, sub: again ? 'Dasselbe nochmal. Nur schlimmer.' : c.sub, vo: again ? 'nochmal' : c.vo, voAt: first ? 1.5 : 0.2 };
+  card = { t: 0, num: ROMAN[chap] + (loop > 0 ? ' · Runde ' + (loop + 1) : '') + ' · ' + c.place.toUpperCase(), name: c.name, sub: again ? 'Dasselbe nochmal. Nur schlimmer.' : c.sub, vo: again ? 'nochmal' : c.vo, voAt: first ? 1.5 : 0.2 };
   formT = 5; pickT = Math.min(pickT, 9); humanT = 2.5; swarmT = 6; dualT = 8; zealT = 5;
   if (first) return;
   m *= 0.4; for (const o of orbs) burst(o.x, o.y, o.type, 3); orbs = []; rings = [];
   const bonus = 500 * stage(); score += bonus; say(W / 2, H * 0.66, '+' + fmt(bonus) + ' Kapitelbonus', C.gold, 18);
   slowT = 0.9; flash = 0.45; ripple(W / 2, H / 2, 40, 1300); confetti(W / 2, H / 2, 60);
   inv = { x: W / 2, y: H / 2, r: 0, sp: Math.hypot(W, H) * 1.3, max: Math.hypot(W, H) + 220 };
-  sfx.chapter();
+  sfx.chapter(); revealTruth();
 }
 function gameOver(good) {
   mode = 'over'; endGood = good; overT = 0; death = 0; shake = 24; flash = 0.6; slowT = 1.2; uber = 0; hammer = null; card = null;
@@ -877,6 +939,8 @@ function gameOver(good) {
     : 'Du hast jetzt ein Büro in der Hölle und ein Diensthandy. Fressen darfst du nur noch nach Dienstplan.';
   let rk = RANKS[0][1]; for (const r of RANKS) if (score >= r[0]) rk = r[1];
   $('rank').textContent = 'Rang: ' + rk;
+  $('overTruth').textContent = truths.length ? '„' + TRUTHS[truths[truths.length - 1]] + '“' : 'Noch keine Wahrheit gefunden. Sie warten hinter den Endgegnern.';
+  showTruthCount();
   $('sScore').textContent = fmt(score); $('sBest').textContent = fmt(best);
   $('sChain').textContent = '×' + bestChain; $('sChap').textContent = ROMAN[chap] + (loop > 0 ? ' · R' + (loop + 1) : '');
   setTimeout(() => { if (mode === 'over') { $('over').hidden = false; overShown = performance.now(); $('again').focus(); } }, 1900);
@@ -906,6 +970,10 @@ function update(rdt) {
   const pc = CHAPS[mode === 'attract' ? Math.floor(time / 9) % 5 : chap], pk = 1 - Math.exp(-2.2 * rdt);    // the world drifts to the chapter's colours
   for (let i = 0; i < 3; i++) { pal.base[i] += (pc.base[i] - pal.base[i]) * pk; pal.dark[i] += (pc.dark[i] - pal.dark[i]) * pk; pal.vein[i] += (pc.vein[i] - pal.vein[i]) * pk; }
   pal.freq += (pc.freq - pal.freq) * pk; pal.warp += (pc.warp - pal.warp) * pk; pal.rad += (pc.rad - pal.rad) * pk;
+  for (let i = 0; i < 3; i++) pal.planet[i] += (pc.planet[i] - pal.planet[i]) * pk;
+  pal.ring += (pc.ring - pal.ring) * pk; pal.cloud += (pc.cloud - pal.cloud) * pk;
+  kal += ((!calm && mode === 'play' && (tier() === 2 || uber > 0) ? 0.9 : 0) - kal) * (1 - Math.exp(-2 * rdt));
+  if (truth && (truth.t += rdt) > 6.5) truth = null;
   for (const r of ripples) { r.r += r.sp * rdt; r.life -= rdt; }
   ripples = ripples.filter(r => r.life > 0);
   if (inv) { inv.r += inv.sp * rdt; if (inv.r > inv.max) inv = null; }
@@ -933,6 +1001,7 @@ function update(rdt) {
 
   for (const p of parts) {
     p.life -= dt; p.x += p.vx * dt; p.y += p.vy * dt; p.rot += p.vr * dt;
+    if (p.k === 'w') { p.x += Math.sin(time * 3 + p.rot) * 24 * S * dt; p.vx *= 0.96; continue; }
     if (p.b !== undefined) {                              // halos and horns: gravity, one bounce off the floor
       p.vy += 1100 * S * dt;
       if (p.y > H - p.size && p.vy > 0 && p.b > 0) { p.vy *= -0.5; p.vx *= 0.7; p.b--; }
@@ -1442,6 +1511,21 @@ function drawLinks() {
   ctx.restore();
 }
 
+function drawScarf() {
+  if (invuln > 0 && Math.sin(time * 40) > 0.3) return;
+  const R = TR() * tiger.sc, ca = Math.cos(tiger.a), sa = Math.sin(tiger.a), n = 8, pts = [];
+  for (let i = 0; i <= n; i++) {
+    const tp = tiger.trail[Math.min(tiger.trail.length - 1, i + 1)] || tiger, fl = Math.sin(time * 9 - i * 0.9) * R * 0.1 * i / 3;
+    pts.push([(tp.x + tiger.x) / 2 + ca * R * (0.3 - 0.3 * i) - sa * (fl + R * 0.42), (tp.y + tiger.y) / 2 + sa * R * (0.3 - 0.3 * i) + ca * (fl + R * 0.42)]);
+  }
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  for (const [col, w] of [[C.ink, R * 0.36], ['#e8324f', R * 0.23]]) {
+    ctx.strokeStyle = col; ctx.lineWidth = w; ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
+    for (let i = 1; i <= n; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+    ctx.stroke();
+  }
+}
+
 function drawTiger() {
   if (invuln > 0 && Math.sin(time * 40) > 0.3) return;        // blinking: untouchable for a moment
   const R = TR() * tiger.sc * (1 + tiger.jump * 0.7), open = tiger.dash > 0 || uber > 0;
@@ -1471,6 +1555,7 @@ function drawTiger() {
     ctx.quadraticCurveTo(x + R * 0.34, s * R * 0.45, x + R * 0.2, s * R); ctx.fill();
   }
   ctx.restore();
+  ctx.fillStyle = '#e8324f'; ctx.fillRect(R * 0.2, -R * 0.66, R * 0.2, R * 1.32);          // the scarf's knot
   // horns appear as the tiger turns böse, the halo as it turns gut
   const evil = clamp(-mv * 1.4, 0, 1), good = clamp(mv * 1.4, 0, 1);
   if (evil > 0) {
@@ -1537,6 +1622,14 @@ function drawParts() {
     } else if (p.k === 'c') {
       ctx.globalAlpha = Math.min(1, a * 2); ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.scale(1, Math.cos(p.rot * 1.7)); ctx.fillStyle = p.col;
       ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.7); ctx.restore();
+    } else if (p.k === 'w') {
+      const sz = p.size * Math.min(1, (p.max - p.life) * 5), sw = Math.sin(time * 3 + p.rot) * sz * 0.5;
+      glow(GLOW.white, p.x, p.y, sz * 3, 0.35 * Math.min(1, a * 2.5));
+      ctx.globalAlpha = Math.min(1, a * 2.5);
+      ctx.strokeStyle = C.green; ctx.lineWidth = sz * 0.28; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(p.x, p.y - sz * 0.8); ctx.quadraticCurveTo(p.x + sw * 0.4, p.y - sz * 1.4, p.x + sw, p.y - sz * 1.8); ctx.stroke();
+      ctx.fillStyle = C.green; circle(p.x + sw, p.y - sz * 1.8, sz * 0.32); ctx.fill();
+      ctx.fillStyle = C.cream; circle(p.x, p.y, sz); ctx.fill(); ctx.strokeStyle = C.ink; ctx.lineWidth = 1.2; ctx.stroke();
+      ctx.fillStyle = C.ink; for (const e of [-1, 1]) { circle(p.x + e * sz * 0.36, p.y - sz * 0.1, sz * 0.15); ctx.fill(); }
     } else if (p.k === 'h') {
       ctx.globalAlpha = Math.min(1, a * 3); ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.strokeStyle = p.col; ctx.lineWidth = p.size * 0.26;
       ctx.beginPath(); ctx.ellipse(0, 0, p.size, p.size * 0.4, 0, 0, TAU); ctx.stroke(); ctx.restore();
@@ -1595,6 +1688,7 @@ function drawGame() {
   drawParts();
   drawLinks();
   drawTrail();
+  drawScarf();
   drawTiger();
   drawSouls();
   for (const x of texts) {
@@ -1603,6 +1697,13 @@ function drawGame() {
     ctx.globalAlpha = clamp(x.life * 2.4, 0, 1); label(ctx, x.str, 0, 0, x.size, x.col); ctx.restore();
   }
   ctx.globalAlpha = 1;
+  if (truth) {
+    const a = clamp(truth.t / 0.5, 0, 1) * clamp((6.5 - truth.t) / 0.8, 0, 1), fs = clamp(W * 0.034, 15, 23);
+    const ls = wrapLines(ctx, '„' + TRUTHS[truth.i] + '“', '600 ' + fs + 'px ' + FONT_B, Math.min(W - 40, 640)), y0 = H * 0.82 - ls.length * fs * 0.7;
+    ctx.save(); ctx.globalAlpha = a * 0.55; ctx.fillStyle = C.ink; ctx.fillRect(0, y0 - fs * 1.9, W, ls.length * fs * 1.4 + fs * 2.6);
+    ctx.globalAlpha = a; label(ctx, 'WAHRHEIT NR. ' + (truth.i + 1) + (truth.isNew ? ' · NEU GEFUNDEN' : ''), W / 2, y0 - fs * 0.9, clamp(W * 0.026, 11, 15), C.gold, 'center', true);
+    ls.forEach((l, i) => label(ctx, l, W / 2, y0 + fs * 0.4 + i * fs * 1.4, fs, C.cream, 'center', true)); ctx.restore();
+  }
   if (card) drawCard();
   else if (banner) {
     const fs = clamp(W * 0.062, 20, 58), a = clamp(banner.life * 2.5, 0, 1), pop = 1 + Math.max(0, banner.life - (banner.max || (banner.max = banner.life)) + 0.2) * 2.5;
@@ -1755,7 +1856,7 @@ if (location.hash === '#debug') window.__jt = {
   } };
 glOK = initGL();
 if (!glOK) useFallback();
-resize(); reset(false);
+resize(); reset(false); showTruthCount();
 if (document.fonts && document.fonts.load) { document.fonts.load('20px Bungee'); document.fonts.load('600 14px "Bricolage Grotesque"'); }
 requestAnimationFrame(frame);
 })();

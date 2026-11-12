@@ -25,6 +25,8 @@ Ein Arcade-Spiel jenseits von Gut und Böse. Engel wollen dich bekehren, Teufel 
 
 Danach beginnt die ewige Wiederkunft: dieselben Kapitel, schneller und härter.
 
+Jedes Kapitel spielt an einem eigenen Ort am gemalten Sternenhimmel (Wolken, Planeten, Polarlicht). Hinter jedem Endgegner wartet eine von zwölf **Wahrheiten**; gefundene bleiben im Browser gespeichert. Im Delirium (Kette ab ×10) faltet sich der Himmel zum Kaleidoskop.
+
 Fundstücke: der **Schnurrbart** (sechs Sekunden Übertiger), der **Hammer** (frisst alles in Reichweite, streng abwechselnd), der **Ring** (ein Extraleben).
 
 ## Technik
